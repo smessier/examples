@@ -3,8 +3,7 @@
 // encodings HTTP client CLI support package
 //
 // Command:
-// $ goa gen goa.design/examples/encodings/design -o
-// $(GOPATH)/src/goa.design/examples/encodings
+// $ goa gen goa.design/examples/encodings/design
 
 package cli
 
@@ -15,6 +14,7 @@ import (
 	"os"
 
 	textc "goa.design/examples/encodings/gen/http/text/client"
+	xmlc "goa.design/examples/encodings/gen/http/xml/client"
 	goa "goa.design/goa"
 	goahttp "goa.design/goa/http"
 )
@@ -25,12 +25,17 @@ import (
 //
 func UsageCommands() string {
 	return `text (concatstrings|concatbytes|concatstringfield|concatbytesfield)
+xml convert
 `
 }
 
 // UsageExamples produces an example of a valid invocation of the CLI tool.
 func UsageExamples() string {
-	return os.Args[0] + ` text concatstrings --a "Velit sed pariatur non." --b "Aperiam similique."` + "\n" +
+	return os.Args[0] + ` text concatstrings --a "Quod illo dolor nihil eum ea asperiores." --b "Nemo nulla incidunt aliquid impedit qui."` + "\n" +
+		os.Args[0] + ` xml convert --body '{
+      "description": "Quisquam blanditiis fuga dolorem nostrum dignissimos expedita.",
+      "name": "Minima ratione atque nisi id repellat molestias."
+   }'` + "\n" +
 		""
 }
 
@@ -61,12 +66,20 @@ func ParseEndpoint(
 		textConcatbytesfieldFlags = flag.NewFlagSet("concatbytesfield", flag.ExitOnError)
 		textConcatbytesfieldAFlag = textConcatbytesfieldFlags.String("a", "REQUIRED", "Left operand")
 		textConcatbytesfieldBFlag = textConcatbytesfieldFlags.String("b", "REQUIRED", "Right operand")
+
+		xmlFlags = flag.NewFlagSet("xml", flag.ContinueOnError)
+
+		xmlConvertFlags    = flag.NewFlagSet("convert", flag.ExitOnError)
+		xmlConvertBodyFlag = xmlConvertFlags.String("body", "REQUIRED", "")
 	)
 	textFlags.Usage = textUsage
 	textConcatstringsFlags.Usage = textConcatstringsUsage
 	textConcatbytesFlags.Usage = textConcatbytesUsage
 	textConcatstringfieldFlags.Usage = textConcatstringfieldUsage
 	textConcatbytesfieldFlags.Usage = textConcatbytesfieldUsage
+
+	xmlFlags.Usage = xmlUsage
+	xmlConvertFlags.Usage = xmlConvertUsage
 
 	if err := flag.CommandLine.Parse(os.Args[1:]); err != nil {
 		return nil, nil, err
@@ -85,6 +98,8 @@ func ParseEndpoint(
 		switch svcn {
 		case "text":
 			svcf = textFlags
+		case "xml":
+			svcf = xmlFlags
 		default:
 			return nil, nil, fmt.Errorf("unknown service %q", svcn)
 		}
@@ -113,6 +128,13 @@ func ParseEndpoint(
 
 			case "concatbytesfield":
 				epf = textConcatbytesfieldFlags
+
+			}
+
+		case "xml":
+			switch epn {
+			case "convert":
+				epf = xmlConvertFlags
 
 			}
 
@@ -152,6 +174,13 @@ func ParseEndpoint(
 				endpoint = c.Concatbytesfield()
 				data, err = textc.BuildConcatbytesfieldPayload(*textConcatbytesfieldAFlag, *textConcatbytesfieldBFlag)
 			}
+		case "xml":
+			c := xmlc.NewClient(scheme, host, doer, enc, dec, restore)
+			switch epn {
+			case "convert":
+				endpoint = c.Convert()
+				data, err = xmlc.BuildConvertPayload(*xmlConvertBodyFlag)
+			}
 		}
 	}
 	if err != nil {
@@ -185,7 +214,7 @@ Concatstrings implements concatstrings.
     -b STRING: Right operand
 
 Example:
-    `+os.Args[0]+` text concatstrings --a "Velit sed pariatur non." --b "Aperiam similique."
+    `+os.Args[0]+` text concatstrings --a "Quod illo dolor nihil eum ea asperiores." --b "Nemo nulla incidunt aliquid impedit qui."
 `, os.Args[0])
 }
 
@@ -197,7 +226,7 @@ Concatbytes implements concatbytes.
     -b STRING: Right operand
 
 Example:
-    `+os.Args[0]+` text concatbytes --a "Iste ut excepturi quos quas." --b "Et soluta vel laudantium deserunt rerum."
+    `+os.Args[0]+` text concatbytes --a "Beatae sit consequuntur incidunt aliquid consequatur sed." --b "Quos expedita et tenetur."
 `, os.Args[0])
 }
 
@@ -209,7 +238,7 @@ Concatstringfield implements concatstringfield.
     -b STRING: Right operand
 
 Example:
-    `+os.Args[0]+` text concatstringfield --a "Possimus consequatur velit sed perferendis qui." --b "Provident nostrum consequatur tenetur eos quas soluta."
+    `+os.Args[0]+` text concatstringfield --a "Deserunt repellat commodi accusantium dolorem explicabo." --b "Autem sunt tenetur minima facere."
 `, os.Args[0])
 }
 
@@ -221,6 +250,33 @@ Concatbytesfield implements concatbytesfield.
     -b STRING: Right operand
 
 Example:
-    `+os.Args[0]+` text concatbytesfield --a "Est autem alias sed cupiditate atque." --b "Architecto aliquam aut."
+    `+os.Args[0]+` text concatbytesfield --a "Suscipit tempore." --b "Ad quo et voluptas blanditiis."
+`, os.Args[0])
+}
+
+// xmlUsage displays the usage of the xml command and its subcommands.
+func xmlUsage() {
+	fmt.Fprintf(os.Stderr, `An xml service that converts an XML payload into a JSON object.
+Usage:
+    %s [globalflags] xml COMMAND [flags]
+
+COMMAND:
+    convert: Convert implements convert.
+
+Additional help:
+    %s xml COMMAND --help
+`, os.Args[0], os.Args[0])
+}
+func xmlConvertUsage() {
+	fmt.Fprintf(os.Stderr, `%s [flags] xml convert -body JSON
+
+Convert implements convert.
+    -body JSON: 
+
+Example:
+    `+os.Args[0]+` xml convert --body '{
+      "description": "Quisquam blanditiis fuga dolorem nostrum dignissimos expedita.",
+      "name": "Minima ratione atque nisi id repellat molestias."
+   }'
 `, os.Args[0])
 }

@@ -120,6 +120,25 @@ paths:
             type: string
       schemes:
       - http
+  /convert:
+    post:
+      tags:
+      - xml
+      summary: convert xml
+      operationId: xml#convert
+      parameters:
+      - name: ConvertRequestBody
+        in: body
+        required: true
+        schema:
+          $ref: '#/definitions/XMLConvertRequestBody'
+      responses:
+        "200":
+          description: OK response.
+          schema:
+            $ref: '#/definitions/XMLConvertResponseBody'
+      schemes:
+      - http
   /swagger.json:
     get:
       summary: Download ../../gen/http/openapi.json
@@ -131,3 +150,32 @@ paths:
             type: file
       schemes:
       - http
+definitions:
+  XMLConvertRequestBody:
+    title: XMLConvertRequestBody
+    type: object
+    properties:
+      description:
+        type: string
+        description: The description
+        example: Debitis cum numquam laboriosam omnis omnis.
+      name:
+        type: string
+        description: The name
+        example: Minus provident asperiores accusantium nesciunt ut tempore.
+    example:
+      description: Rem minus voluptas at voluptates pariatur aut.
+      name: In corrupti reiciendis excepturi eos.
+  XMLConvertResponseBody:
+    title: XMLConvertResponseBody
+    type: object
+    properties:
+      description:
+        type: string
+        example: Laborum quis sed iusto sapiente nulla.
+      name:
+        type: string
+        example: Asperiores laboriosam dolor.
+    example:
+      description: Sed ipsam aut dolorem voluptatem ipsa eaque.
+      name: Accusamus quasi.

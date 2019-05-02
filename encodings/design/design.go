@@ -9,7 +9,7 @@ var _ = API("encodings", func() {
 	Description("Encoding example service demonstrating the use of different content types")
 
 	Server("encodings", func() {
-		Services("text")
+		Services("text", "xml")
 	})
 })
 
@@ -119,4 +119,29 @@ var _ = Service("text", func() {
 var MyConcatenation = Type("MyConcatenation", func() {
 	Attribute("stringfield", String)
 	Attribute("bytesfield", Bytes)
+})
+
+var _ = Service("xml", func() {
+	Description("An xml service that converts an XML payload into a JSON object.")
+	Method("convert", func() {
+		Payload(func() {
+			Attribute("name", String, "The name", func() {
+				Meta("struct:tag:xml", "Name,omitempty")
+			})
+			Attribute("description", String, "The description", func() {
+				Meta("struct:tag:xml", "Description,omitempty")
+			})
+		})
+		Result(JSONObject)
+
+		HTTP(func() {
+			POST("/convert")
+			Response(StatusOK)
+		})
+	})
+})
+
+var JSONObject = Type("JSONObject", func() {
+	Attribute("name", String)
+	Attribute("description", String)
 })

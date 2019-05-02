@@ -13,6 +13,7 @@ import (
 
 	encodings "goa.design/examples/encodings"
 	text "goa.design/examples/encodings/gen/text"
+	xml "goa.design/examples/encodings/gen/xml"
 )
 
 func main() {
@@ -38,18 +39,22 @@ func main() {
 	// Initialize the services.
 	var (
 		textSvc text.Service
+		xmlSvc  xml.Service
 	)
 	{
 		textSvc = encodings.NewText(logger)
+		xmlSvc = encodings.NewXML(logger)
 	}
 
 	// Wrap the services in endpoints that can be invoked from other services
 	// potentially running in different processes.
 	var (
 		textEndpoints *text.Endpoints
+		xmlEndpoints  *xml.Endpoints
 	)
 	{
 		textEndpoints = text.NewEndpoints(textSvc)
+		xmlEndpoints = xml.NewEndpoints(xmlSvc)
 	}
 
 	// Create channel used by both the signal handler and server goroutines
@@ -89,7 +94,7 @@ func main() {
 			} else if u.Port() == "" {
 				u.Host += ":80"
 			}
-			handleHTTPServer(ctx, u, textEndpoints, &wg, errc, logger, *dbgF)
+			handleHTTPServer(ctx, u, textEndpoints, xmlEndpoints, &wg, errc, logger, *dbgF)
 		}
 
 	default:

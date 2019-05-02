@@ -10,7 +10,9 @@ import (
 	"time"
 
 	textsvr "goa.design/examples/encodings/gen/http/text/server"
+	xmlsvr "goa.design/examples/encodings/gen/http/xml/server"
 	text "goa.design/examples/encodings/gen/text"
+	xml "goa.design/examples/encodings/gen/xml"
 	goahttp "goa.design/goa/http"
 	httpmdlwr "goa.design/goa/http/middleware"
 	"goa.design/goa/middleware"
@@ -18,7 +20,7 @@ import (
 
 // handleHTTPServer starts configures and starts a HTTP server on the given
 // URL. It shuts down the server if any error is received in the error channel.
-func handleHTTPServer(ctx context.Context, u *url.URL, textEndpoints *text.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
+func handleHTTPServer(ctx context.Context, u *url.URL, textEndpoints *text.Endpoints, xmlEndpoints *xml.Endpoints, wg *sync.WaitGroup, errc chan error, logger *log.Logger, debug bool) {
 
 	// Setup goa log adapter.
 	var (
@@ -50,13 +52,16 @@ func handleHTTPServer(ctx context.Context, u *url.URL, textEndpoints *text.Endpo
 	// responses.
 	var (
 		textServer *textsvr.Server
+		xmlServer  *xmlsvr.Server
 	)
 	{
 		eh := errorHandler(logger)
 		textServer = textsvr.New(textEndpoints, mux, dec, enc, eh)
+		xmlServer = xmlsvr.New(xmlEndpoints, mux, dec, enc, eh)
 	}
 	// Configure the mux.
 	textsvr.Mount(mux, textServer)
+	xmlsvr.Mount(mux, xmlServer)
 
 	// Wrap the multiplexer with additional middlewares. Middlewares mounted
 	// here apply to all the service endpoints.
@@ -73,6 +78,9 @@ func handleHTTPServer(ctx context.Context, u *url.URL, textEndpoints *text.Endpo
 	// configure the server as required by your service.
 	srv := &http.Server{Addr: u.Host, Handler: handler}
 	for _, m := range textServer.Mounts {
+		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
+	}
+	for _, m := range xmlServer.Mounts {
 		logger.Printf("HTTP %q mounted on %s %s", m.Method, m.Verb, m.Pattern)
 	}
 
