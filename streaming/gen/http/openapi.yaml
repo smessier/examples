@@ -45,7 +45,7 @@ paths:
       schemes:
       - ws
       security:
-      - jwt_header_Authorization: []
+      - jwt: []
   /history:
     get:
       tags:
@@ -84,7 +84,7 @@ paths:
       schemes:
       - ws
       security:
-      - jwt_header_Authorization: []
+      - jwt: []
   /listener:
     get:
       tags:
@@ -116,7 +116,7 @@ paths:
       schemes:
       - ws
       security:
-      - jwt_header_Authorization: []
+      - jwt: []
   /login:
     post:
       tags:
@@ -124,12 +124,6 @@ paths:
       summary: login chatter
       description: Creates a valid JWT token for auth to chat.
       operationId: chatter#login
-      parameters:
-      - name: Authorization
-        in: header
-        description: Basic Auth security using Basic scheme (https://tools.ietf.org/html/rfc7617)
-        required: true
-        type: string
       responses:
         "200":
           description: OK response.
@@ -142,7 +136,7 @@ paths:
       schemes:
       - http
       security:
-      - basic_header_Authorization: []
+      - basic: []
   /subscribe:
     get:
       tags:
@@ -180,7 +174,7 @@ paths:
       schemes:
       - ws
       security:
-      - jwt_header_Authorization: []
+      - jwt: []
   /summary:
     get:
       tags:
@@ -214,7 +208,7 @@ paths:
       schemes:
       - ws
       security:
-      - jwt_header_Authorization: []
+      - jwt: []
 definitions:
   ChatSummaryResponse:
     title: 'Mediatype identifier: application/vnd.goa.summary; view=default'
@@ -357,10 +351,10 @@ definitions:
     type: string
     example: Ad non id iure sunt dolorem perspiciatis.
 securityDefinitions:
-  basic_header_Authorization:
+  basic:
     type: basic
     description: Secures the login endpoint.
-  jwt_header_Authorization:
+  jwt:
     type: apiKey
     description: |-
       Secures endpoint by requiring a valid JWT token. Supports scopes "stream:read" and "stream:write".
